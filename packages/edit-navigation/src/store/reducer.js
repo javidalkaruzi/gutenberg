@@ -1,7 +1,6 @@
 /**
  * External dependencies
  */
-import { invert } from 'lodash';
 import EquivalentKeyMap from 'equivalent-key-map';
 
 /**
@@ -14,22 +13,19 @@ function mappings( state, { type, query, ...action } ) {
 		const { mapping } = action;
 		const nextState = new EquivalentKeyMap( state );
 		nextState.set( query, {
-			menuItemIdByClientId: mapping,
-			clientIdByMenuItemId: invert( mapping ),
+			menuItemIdToClientId: mapping,
 		} );
 		return nextState;
 	}
 
 	if ( type === 'ASSIGN_MENU_ITEM_ID_TO_CLIENT_ID' ) {
 		const { menuItemId, clientId } = action;
-		const menuItemIdByClientId = {
-			...state.get( query )?.menuItemIdByClientId,
-			[ menuItemId ]: clientId,
-		};
 		const nextState = new EquivalentKeyMap( state );
 		nextState.set( query, {
-			menuItemIdByClientId,
-			clientIdByMenuItemId: invert( menuItemIdByClientId ),
+			menuItemIdToClientId: {
+				...state.get( query )?.menuItemIdToClientId,
+				[ menuItemId ]: clientId,
+			},
 		} );
 		return nextState;
 	}

@@ -10,7 +10,7 @@ import { createBlock } from '@wordpress/blocks';
 
 export default function createNavigationBlock( menuItems ) {
 	const itemsByParentID = groupBy( menuItems, 'parent' );
-	const menuItemIdByClientId = {};
+	const menuItemIdToClientId = {};
 	const menuItemsToTreeOfBlocks = ( items ) => {
 		const innerBlocks = [];
 		if ( ! items ) {
@@ -29,7 +29,7 @@ export default function createNavigationBlock( menuItems ) {
 				item,
 				menuItemInnerBlocks
 			);
-			menuItemIdByClientId[ linkBlock.clientId ] = item.id;
+			menuItemIdToClientId[ item.id ] = linkBlock.clientId;
 			innerBlocks.push( linkBlock );
 		}
 		return innerBlocks;
@@ -38,7 +38,7 @@ export default function createNavigationBlock( menuItems ) {
 	// menuItemsToTreeOfLinkBlocks takes an array of top-level menu items and recursively creates all their innerBlocks
 	const innerBlocks = menuItemsToTreeOfBlocks( itemsByParentID[ 0 ] || [] );
 	const navigationBlock = createBlock( 'core/navigation', {}, innerBlocks );
-	return [ navigationBlock, menuItemIdByClientId ];
+	return [ navigationBlock, menuItemIdToClientId ];
 }
 
 export function convertMenuItemToLinkBlock( menuItem, innerBlocks = [] ) {

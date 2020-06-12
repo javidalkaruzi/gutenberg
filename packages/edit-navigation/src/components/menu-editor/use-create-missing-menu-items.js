@@ -101,7 +101,7 @@ function useStoreSavedMenuItem( query ) {
 	const select = useSelect( ( s ) => s );
 	return useCallback(
 		( clientId, menuItem ) => {
-			assignMenuItemIdToClientId( query, clientId, menuItem.id );
+			assignMenuItemIdToClientId( query, menuItem.id, clientId );
 			receiveEntityRecords(
 				'root',
 				'menuItem',

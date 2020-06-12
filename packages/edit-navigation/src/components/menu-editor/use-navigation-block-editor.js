@@ -51,10 +51,10 @@ export function useInitializeStubPost( query ) {
 		if ( menuItems === null ) {
 			return;
 		}
-		const [ navigationBlock, menuItemIdByClientId ] = createNavigationBlock(
+		const [ navigationBlock, menuItemIdToClientId ] = createNavigationBlock(
 			menuItems
 		);
-		setMenuItemsToClientIdMapping( query, menuItemIdByClientId );
+		setMenuItemsToClientIdMapping( query, menuItemIdToClientId );
 
 		const post = createStubPost( navigationBlock );
 		receiveEntityRecords( 'root', 'postType', post, null, false );

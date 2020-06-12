@@ -1,3 +1,3 @@
-export function getClientIdsByMenuId( state, query ) {
-	return state.mappings?.get( query )?.clientIdByMenuItemId;
+export function getMenuItemIdToClientIdMapping( state, query ) {
+	return state.mappings?.get( query )?.menuItemIdToClientId;
 }

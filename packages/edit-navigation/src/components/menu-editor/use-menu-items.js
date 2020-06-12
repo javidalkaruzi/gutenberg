@@ -48,16 +48,6 @@ export function useFetchMenuItems( query ) {
 	return resolvedMenuItems;
 }
 
-export function useMenuItemsByClientId( query ) {
-	const menuItems = useFetchMenuItems( query );
-	const { clientIdsByMenuId } = useSelect( ( select ) => ( {
-		clientIdsByMenuId: select(
-			'core/edit-navigation'
-		).getClientIdsByMenuId(),
-	} ) );
-	return mapMenuItemsByClientId( menuItems, clientIdsByMenuId );
-}
-
 function mapMenuItemsByClientId( menuItems, clientIdsByMenuId ) {
 	const result = {};
 	if ( ! menuItems || ! clientIdsByMenuId ) {
@@ -80,12 +70,12 @@ export function useSaveMenuItems( query ) {
 
 	const saveBlocks = async ( blocks ) => {
 		const menuItems = select( 'core' ).getMenuItems( query );
-		const clientIdsByMenuId = select(
+		const menuitemIdToClientIdMapping = select(
 			'core/edit-navigation'
-		).getClientIdsByMenuId( query );
+		).getMenuItemIdToClientIdMapping( query );
 		const menuItemsByClientId = mapMenuItemsByClientId(
 			menuItems,
-			clientIdsByMenuId
+			menuitemIdToClientIdMapping
 		);
 
 		const result = await batchSave(
