@@ -8,6 +8,12 @@ import { groupBy, sortBy } from 'lodash';
  */
 import { createBlock } from '@wordpress/blocks';
 
+/**
+ * Converts menuItems to Gutenberg blocks tree
+ *
+ * @param {Array} menuItems
+ * @return {Array} [ {List of blocks}, object {menu item id -> client id} ]
+ */
 export default function createNavigationBlock( menuItems ) {
 	const itemsByParentID = groupBy( menuItems, 'parent' );
 	const menuItemIdToClientId = {};
