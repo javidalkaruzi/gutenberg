@@ -11,20 +11,6 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
-/**
- * Internal dependencies
- */
-import useCreateMissingMenuItems from './use-create-missing-menu-items';
-
-export default function useMenuItems( query ) {
-	const menuItems = useFetchMenuItems( query );
-	const saveMenuItems = useSaveMenuItems( query );
-	const [ createMissingMenuItems, onCreated ] = useCreateMissingMenuItems();
-	const eventuallySaveMenuItems = ( blocks ) =>
-		onCreated( () => saveMenuItems( blocks ) );
-	return { menuItems, eventuallySaveMenuItems, createMissingMenuItems };
-}
-
 export function useFetchMenuItems( query ) {
 	const { menuItems, isResolving } = useSelect( ( select ) => ( {
 		menuItems: select( 'core' ).getMenuItems( query ),
@@ -67,15 +53,12 @@ export function useSaveMenuItems( query ) {
 		'core/notices'
 	);
 	const select = useSelect( ( s ) => s );
-
 	const saveBlocks = async ( blocks ) => {
-		const menuItems = select( 'core' ).getMenuItems( query );
-		const menuitemIdToClientIdMapping = select(
-			'core/edit-navigation'
-		).getMenuItemIdToClientIdMapping( query );
 		const menuItemsByClientId = mapMenuItemsByClientId(
-			menuItems,
-			menuitemIdToClientIdMapping
+			select( 'core' ).getMenuItems( query ),
+			select( 'core/edit-navigation' ).getMenuItemIdToClientIdMapping(
+				query
+			)
 		);
 
 		const result = await batchSave(

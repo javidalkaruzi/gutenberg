@@ -8,7 +8,7 @@ import { useEntityBlockEditor } from '@wordpress/core-data';
 /**
  * Internal dependencies
  */
-import { useFetchMenuItems, useSaveMenuItems } from './use-menu-items';
+import { useFetchMenuItems, useSaveMenuItems } from './use-menu-items-state';
 import createNavigationBlock from './create-navigation-block';
 import useCreateMissingMenuItems from './use-create-missing-menu-items';
 
