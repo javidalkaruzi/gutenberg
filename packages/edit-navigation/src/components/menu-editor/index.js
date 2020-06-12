@@ -25,16 +25,17 @@ export default function MenuEditor( {
 	const query = useMemo( () => ( { menus: menuId, per_page: -1 } ), [
 		menuId,
 	] );
-	const stubPostReady = useStubPost( query );
+	const postId = useStubPost( query );
 
 	return (
 		<div className="edit-navigation-menu-editor">
 			<BlockEditorKeyboardShortcuts.Register />
 			<MenuEditorShortcuts.Register />
 
-			{ stubPostReady && (
+			{ postId && (
 				<NavigationBlockEditorProvider
 					query={ query }
+					postId={ postId }
 					menuId={ menuId }
 					blockEditorSettings={ blockEditorSettings }
 					onDeleteMenu={ onDeleteMenu }
@@ -47,6 +48,7 @@ export default function MenuEditor( {
 const NavigationBlockEditorProvider = ( {
 	query,
 	menuId,
+	postId,
 	blockEditorSettings,
 	onDeleteMenu,
 } ) => {
@@ -56,7 +58,7 @@ const NavigationBlockEditorProvider = ( {
 		onInput,
 		onChange,
 		saveMenuItems,
-	] = useNavigationBlockEditor( query );
+	] = useNavigationBlockEditor( query, postId );
 	return (
 		<BlockEditorProvider
 			value={ blocks }

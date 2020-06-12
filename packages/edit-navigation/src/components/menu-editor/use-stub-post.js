@@ -9,16 +9,15 @@ import { useEffect, useState } from '@wordpress/element';
  */
 import createNavigationBlock from './create-navigation-block';
 
-export const DRAFT_POST_ID = 'navigation-post';
-
 export default function useStubPost( query ) {
-	const [ stubPostInitialized, setStubPostInitialized ] = useState( false );
+	const [ postId, setPostId ] = useState( false );
 	const menuItems = useFetchMenuItems( query );
 	const { receiveEntityRecords } = useDispatch( 'core' );
 	const { setMenuItemsToClientIdMapping } = useDispatch(
 		'core/edit-navigation'
 	);
 	useEffect( () => {
+		setPostId( null );
 		if ( menuItems === null ) {
 			return;
 		}
@@ -27,25 +26,27 @@ export default function useStubPost( query ) {
 		);
 		setMenuItemsToClientIdMapping( query, menuItemIdToClientId );
 
-		const post = createStubPost( navigationBlock );
-		receiveEntityRecords(
+		const post = createStubPost( query.menus, navigationBlock );
+		const entityStored = receiveEntityRecords(
 			'root',
 			'postType',
 			post,
-			{ id: DRAFT_POST_ID },
+			{ id: post.id },
 			false
-		).then( () => {
-			setStubPostInitialized( true );
+		);
+		entityStored.then( () => {
+			setPostId( post.id );
 		} );
 	}, [ menuItems === null, query ] );
-	return stubPostInitialized;
+	return postId;
 }
 
-function createStubPost( navigationBlock ) {
+function createStubPost( menuId, navigationBlock ) {
+	const POST_ID = `navigation-post-${ menuId }`;
 	return {
-		id: DRAFT_POST_ID,
-		slug: DRAFT_POST_ID,
-		generated_slug: DRAFT_POST_ID,
+		id: POST_ID,
+		slug: POST_ID,
+		generated_slug: POST_ID,
 		status: 'draft',
 		type: 'page',
 		blocks: [ navigationBlock ],

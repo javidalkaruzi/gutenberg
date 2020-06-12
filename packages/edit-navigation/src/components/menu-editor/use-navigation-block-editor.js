@@ -12,9 +12,7 @@ import { useEntityBlockEditor } from '@wordpress/core-data';
 import useCreateMissingMenuItems from './use-create-missing-menu-items';
 import batchSave from './batch-save';
 
-export const DRAFT_POST_ID = 'navigation-post';
-
-export default function useNavigationBlockEditor( query ) {
+export default function useNavigationBlockEditor( query, postId ) {
 	const [ createMissingMenuItems, onCreated ] = useCreateMissingMenuItems(
 		query
 	);
@@ -24,7 +22,7 @@ export default function useNavigationBlockEditor( query ) {
 	const [ blocks, onInput, onChange ] = useEntityBlockEditor(
 		'root',
 		'postType',
-		{ id: DRAFT_POST_ID }
+		{ id: postId }
 	);
 	const onProviderChange = useCallback(
 		( updatedBlocks ) => {
