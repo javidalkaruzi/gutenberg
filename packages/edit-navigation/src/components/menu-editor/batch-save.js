@@ -1,87 +1,21 @@
 /**
+ * WordPress dependencies
+ */
+/**
  * External dependencies
  */
 import { keyBy, omit } from 'lodash';
 
 /**
- * WordPress dependencies
+ * Internal dependencies
  */
-import { useDispatch, useSelect } from '@wordpress/data';
-import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
-export function useFetchMenuItems( query ) {
-	const { menuItems, isResolving } = useSelect( ( select ) => ( {
-		menuItems: select( 'core' ).getMenuItems( query ),
-		isResolving: select( 'core/data' ).isResolving(
-			'core',
-			'getMenuItems',
-			[ query ]
-		),
-	} ) );
-
-	const [ resolvedMenuItems, setResolvedMenuItems ] = useState( null );
-
-	useEffect( () => {
-		if ( isResolving || menuItems === null ) {
-			return;
-		}
-
-		setResolvedMenuItems( menuItems );
-	}, [ isResolving, menuItems ] );
-
-	return resolvedMenuItems;
-}
-
-function mapMenuItemsByClientId( menuItems, clientIdsByMenuId ) {
-	const result = {};
-	if ( ! menuItems || ! clientIdsByMenuId ) {
-		return result;
-	}
-	for ( const menuItem of menuItems ) {
-		const clientId = clientIdsByMenuId[ menuItem.id ];
-		if ( clientId ) {
-			result[ clientId ] = menuItem;
-		}
-	}
-	return result;
-}
-
-export function useSaveMenuItems( query ) {
-	const { createSuccessNotice, createErrorNotice } = useDispatch(
-		'core/notices'
-	);
-	const select = useSelect( ( s ) => s );
-	const saveBlocks = async ( blocks ) => {
-		const menuItemsByClientId = mapMenuItemsByClientId(
-			select( 'core' ).getMenuItems( query ),
-			select( 'core/edit-navigation' ).getMenuItemIdToClientIdMapping(
-				query
-			)
-		);
-
-		const result = await batchSave(
-			query.menus,
-			menuItemsByClientId,
-			blocks[ 0 ]
-		);
-
-		if ( result.success ) {
-			createSuccessNotice( __( 'Navigation saved.' ), {
-				type: 'snackbar',
-			} );
-		} else {
-			createErrorNotice( __( 'There was an error.' ), {
-				type: 'snackbar',
-			} );
-		}
-	};
-
-	return saveBlocks;
-}
-
-async function batchSave( menuId, menuItemsByClientId, navigationBlock ) {
+export default async function batchSave(
+	menuId,
+	menuItemsByClientId,
+	navigationBlock
+) {
 	const { nonce, stylesheet } = await apiFetch( {
 		path: '/__experimental/customizer-nonces/get-save-nonce',
 	} );

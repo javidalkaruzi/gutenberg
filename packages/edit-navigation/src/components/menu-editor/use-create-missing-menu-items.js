@@ -18,7 +18,7 @@ import PromiseQueue from './promise-queue';
  * 1) limit the amount of requests processed at the same time
  * 2) save the menu only after all requests are finalized
  *
- * @param query
+ * @param {Object} query
  * @return {function(*=): void} Function registering it's argument to be called once all menuItems are created.
  */
 export default function useCreateMissingMenuItems( query ) {
@@ -41,10 +41,10 @@ function useProcessNewBlocks( query, processClientId, onClientIdProcessed ) {
 		processedClientIdsRef.current = [];
 	}, [ query ] );
 
-	const promiseQueue = promiseQueueRef.current;
-	const processedClientIds = processedClientIdsRef.current;
 	const processNewBlocks = useCallback(
 		( previousBlocks, newBlocks ) => {
+			const promiseQueue = promiseQueueRef.current;
+			const processedClientIds = processedClientIdsRef.current;
 			const delta = diffBlocks( previousBlocks, newBlocks );
 			for ( const { clientId } of delta ) {
 				if ( processedClientIds.includes( clientId ) ) {
@@ -61,16 +61,11 @@ function useProcessNewBlocks( query, processClientId, onClientIdProcessed ) {
 				);
 			}
 		},
-		[
-			promiseQueue,
-			processedClientIds,
-			processClientId,
-			onClientIdProcessed,
-		]
+		[ promiseQueueRef.current, processClientId, onClientIdProcessed ]
 	);
 	const onProcessed = useCallback(
-		( callback ) => promiseQueue.then( callback ),
-		[ promiseQueue ]
+		( callback ) => promiseQueueRef.current.then( callback ),
+		[ promiseQueueRef.current ]
 	);
 	return [ processNewBlocks, onProcessed ];
 }
