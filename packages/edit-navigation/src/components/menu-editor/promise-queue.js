@@ -7,14 +7,27 @@ export default class PromiseQueue {
 		this.queue = [];
 		this.active = [];
 		this.listeners = [];
+		this.halted = false;
+	}
+
+	halt() {
+		this.halted = true;
+		this.queue = [];
+		this.listeners = [];
 	}
 
 	enqueue( action ) {
+		if ( this.halted ) {
+			return;
+		}
 		this.queue.push( action );
 		this.run();
 	}
 
 	run() {
+		if ( this.halted ) {
+			return;
+		}
 		while ( this.queue.length && this.active.length < this.concurrency ) {
 			const action = this.queue.shift();
 			const promise = action().then( () => {
@@ -27,6 +40,9 @@ export default class PromiseQueue {
 	}
 
 	notifyIfEmpty() {
+		if ( this.halted ) {
+			return;
+		}
 		if ( this.active.length === 0 && this.queue.length === 0 ) {
 			for ( const l of this.listeners ) {
 				l();
@@ -42,6 +58,9 @@ export default class PromiseQueue {
 	 * @param {Function} callback Callback to call
 	 */
 	then( callback ) {
+		if ( this.halted ) {
+			return;
+		}
 		if ( this.active.length ) {
 			this.listeners.push( callback );
 		} else {

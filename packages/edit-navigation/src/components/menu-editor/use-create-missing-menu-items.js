@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import apiFetch from '@wordpress/api-fetch';
-import { useRef, useCallback } from '@wordpress/element';
+import { useRef, useEffect, useCallback } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
 
 /**
@@ -22,58 +22,96 @@ import PromiseQueue from './promise-queue';
  * @return {function(*=): void} Function registering it's argument to be called once all menuItems are created.
  */
 export default function useCreateMissingMenuItems( query ) {
-	const promiseQueueRef = useRef( new PromiseQueue( 5 ) );
-	const processedClientIds = useRef( [] );
-	const { assignMenuItemIdToClientId } = useDispatch(
-		'core/edit-navigation'
+	const storeSavedMenuItem = useStoreSavedMenuItem( query );
+	return useProcessNewBlocks(
+		query,
+		createDraftMenuItem,
+		storeSavedMenuItem
 	);
-	const { receiveEntityRecords } = useDispatch( 'core' );
+}
 
-	const select = useSelect( ( s ) => s );
+function useProcessNewBlocks( query, processClientId, onClientIdProcessed ) {
+	const promiseQueueRef = useRef();
+	const processedClientIdsRef = useRef();
+	useEffect( () => {
+		if ( promiseQueueRef.current ) {
+			promiseQueueRef.current.halt();
+		}
+		promiseQueueRef.current = new PromiseQueue( 5 );
+		processedClientIdsRef.current = [];
+	}, [ query ] );
 
-	const createMissingMenuItems = useCallback(
+	const promiseQueue = promiseQueueRef.current;
+	const processedClientIds = processedClientIdsRef.current;
+	const processNewBlocks = useCallback(
 		( previousBlocks, newBlocks ) => {
-			const existingClientIds = flattenBlocks( previousBlocks ).map(
-				( { clientId } ) => clientId
-			);
-			for ( const { clientId, name } of flattenBlocks( newBlocks ) ) {
-				// No need to create menuItems for the wrapping navigation block
-				if ( name === 'core/navigation' ) {
+			const delta = diffBlocks( previousBlocks, newBlocks );
+			for ( const { clientId } of delta ) {
+				if ( processedClientIds.includes( clientId ) ) {
 					continue;
 				}
-				// Menu item was already created
-				if ( existingClientIds.includes( clientId ) ) {
-					continue;
-				}
-				// Menu item already processed
-				if ( processedClientIds.current.includes( clientId ) ) {
-					continue;
-				}
-				processedClientIds.current.push( clientId );
-				promiseQueueRef.current.enqueue( () =>
-					createDraftMenuItem( clientId ).then( ( menuItem ) => {
-						assignMenuItemIdToClientId( clientId, menuItem.id );
-						receiveEntityRecords(
-							'root',
-							'menuItem',
-							[
-								...select( 'core' ).getMenuItems( query ),
-								menuItem,
-							],
-							{ ...query, per_page: 1 },
-							false
-						);
+				processedClientIds.push( clientId );
+				promiseQueue.enqueue( () =>
+					processClientId( clientId ).then( ( result ) => {
+						if ( promiseQueue.halted ) {
+							return;
+						}
+						onClientIdProcessed( clientId, result );
 					} )
 				);
 			}
 		},
+		[
+			promiseQueue,
+			processedClientIds,
+			processClientId,
+			onClientIdProcessed,
+		]
+	);
+	const onProcessed = useCallback(
+		( callback ) => promiseQueue.then( callback ),
+		[ promiseQueue ]
+	);
+	return [ processNewBlocks, onProcessed ];
+}
+
+function* diffBlocks( previousBlocks, newBlocks ) {
+	const existingClientIds = flattenBlocks( previousBlocks ).map(
+		( { clientId } ) => clientId
+	);
+	for ( const block of flattenBlocks( newBlocks ) ) {
+		const { clientId, name } = block;
+		// No need to create menuItems for the wrapping navigation block
+		if ( name === 'core/navigation' ) {
+			continue;
+		}
+		// Menu item was already created
+		if ( existingClientIds.includes( clientId ) ) {
+			continue;
+		}
+		yield block;
+	}
+}
+
+function useStoreSavedMenuItem( query ) {
+	const { assignMenuItemIdToClientId } = useDispatch(
+		'core/edit-navigation'
+	);
+	const { receiveEntityRecords } = useDispatch( 'core' );
+	const select = useSelect( ( s ) => s );
+	return useCallback(
+		( clientId, menuItem ) => {
+			assignMenuItemIdToClientId( query, clientId, menuItem.id );
+			receiveEntityRecords(
+				'root',
+				'menuItem',
+				[ ...select( 'core' ).getMenuItems( query ), menuItem ],
+				query,
+				false
+			);
+		},
 		[ query ]
 	);
-	const onCreated = useCallback(
-		( callback ) => promiseQueueRef.current.then( callback ),
-		[ promiseQueueRef.current ]
-	);
-	return { createMissingMenuItems, onCreated };
 }
 
 function createDraftMenuItem() {

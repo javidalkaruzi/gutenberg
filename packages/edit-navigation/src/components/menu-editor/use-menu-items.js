@@ -19,7 +19,7 @@ import useCreateMissingMenuItems from './use-create-missing-menu-items';
 export default function useMenuItems( query ) {
 	const menuItems = useFetchMenuItems( query );
 	const saveMenuItems = useSaveMenuItems( query );
-	const { createMissingMenuItems, onCreated } = useCreateMissingMenuItems();
+	const [ createMissingMenuItems, onCreated ] = useCreateMissingMenuItems();
 	const eventuallySaveMenuItems = ( blocks ) =>
 		onCreated( () => saveMenuItems( blocks ) );
 	return { menuItems, eventuallySaveMenuItems, createMissingMenuItems };
@@ -82,7 +82,7 @@ export function useSaveMenuItems( query ) {
 		const menuItems = select( 'core' ).getMenuItems( query );
 		const clientIdsByMenuId = select(
 			'core/edit-navigation'
-		).getClientIdsByMenuId();
+		).getClientIdsByMenuId( query );
 		const menuItemsByClientId = mapMenuItemsByClientId(
 			menuItems,
 			clientIdsByMenuId

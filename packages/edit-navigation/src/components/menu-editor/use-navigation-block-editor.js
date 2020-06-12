@@ -18,7 +18,7 @@ export default function useNavigationBlockEditor( navigationId ) {
 	const query = useMemo( () => ( { menus: navigationId, per_page: -1 } ), [
 		navigationId,
 	] );
-	const { createMissingMenuItems, onCreated } = useCreateMissingMenuItems(
+	const [ createMissingMenuItems, onCreated ] = useCreateMissingMenuItems(
 		query
 	);
 	const saveMenuItems = useSaveMenuItems( query );
@@ -54,7 +54,7 @@ export function useInitializeStubPost( query ) {
 		const [ navigationBlock, menuItemIdByClientId ] = createNavigationBlock(
 			menuItems
 		);
-		setMenuItemsToClientIdMapping( menuItemIdByClientId );
+		setMenuItemsToClientIdMapping( query, menuItemIdByClientId );
 
 		const post = createStubPost( navigationBlock );
 		receiveEntityRecords( 'root', 'postType', post, null, false );
