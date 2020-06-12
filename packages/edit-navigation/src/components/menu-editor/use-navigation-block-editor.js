@@ -19,20 +19,20 @@ export default function useNavigationBlockEditor( query, postId ) {
 	const saveMenuItems = useSaveMenuItems( query );
 	const save = () => onCreated( () => saveMenuItems( blocks ) );
 
-	const [ blocks, onInput, onChange ] = useEntityBlockEditor(
+	const [ blocks, onInput, _onChange ] = useEntityBlockEditor(
 		'root',
 		'postType',
 		{ id: postId }
 	);
-	const onProviderChange = useCallback(
+	const onChange = useCallback(
 		( updatedBlocks ) => {
-			onChange( updatedBlocks );
+			_onChange( updatedBlocks );
 			createMissingMenuItems( blocks, updatedBlocks );
 		},
 		[ blocks, onChange, createMissingMenuItems ]
 	);
 
-	return [ blocks, onInput, onProviderChange, save ];
+	return [ blocks, onInput, onChange, save ];
 }
 
 export function useSaveMenuItems( query ) {
