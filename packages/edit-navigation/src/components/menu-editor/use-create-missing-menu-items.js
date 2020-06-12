@@ -61,7 +61,7 @@ function useProcessNewBlocks( query, processClientId, onClientIdProcessed ) {
 				);
 			}
 		},
-		[ promiseQueueRef.current, processClientId, onClientIdProcessed ]
+		[ query, processClientId, onClientIdProcessed ]
 	);
 	const onProcessed = useCallback(
 		( callback ) => promiseQueueRef.current.then( callback ),
