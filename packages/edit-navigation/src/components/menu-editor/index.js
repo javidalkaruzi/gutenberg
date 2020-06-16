@@ -24,7 +24,6 @@ export default function MenuEditor( {
 	const post = useSelect( ( select ) =>
 		select( 'core/edit-navigation' ).getNavigationPost( menuId )
 	);
-
 	return (
 		<div className="edit-navigation-menu-editor">
 			<BlockEditorKeyboardShortcuts.Register />

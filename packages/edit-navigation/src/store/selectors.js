@@ -16,10 +16,6 @@ export function isProcessingMenuItems( state, menuId ) {
 	return state.processing[ menuId ]?.inProgress;
 }
 
-export function getMenuItemIdToClientIdMapping( state, menuId ) {
-	return state.mappings?.get( menuId )?.menuItemIdToClientId;
-}
-
 export const getNavigationPost = createRegistrySelector(
 	( select ) => ( state, menuId ) => {
 		return select( 'core' ).getEditedEntityRecord(

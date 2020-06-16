@@ -11,40 +11,14 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import {
-	select,
-	resolveMenuItems,
-	dispatch,
-	apiFetch,
-} from './controls';
-import { uuidv4, menuItemsQuery } from './utils';
-
-export function setMenuItemsToClientIdMapping( menuId, mapping ) {
-	return {
-		type: 'SET_MENU_ITEMS_TO_CLIENT_ID_MAPPING',
-		menuId,
-		mapping,
-	};
-}
-
-export function assignMenuItemIdToClientId( menuId, menuItemId, clientId ) {
-	return {
-		type: 'ASSIGN_MENU_ITEM_ID_TO_CLIENT_ID',
-		menuId,
-		menuItemId,
-		clientId,
-	};
-}
+import { select, resolveMenuItems, dispatch, apiFetch } from './controls';
+import { uuidv4, menuItemsQuery, KIND, POST_TYPE } from './utils';
 
 // Hits POST /wp/v2/menu-items once for every Link block that doesn't have an
 // associated menu item. (IDK what a good name for this is.)
 export const createMissingMenuItems = serializeProcessing( function* ( post ) {
 	const menuId = post.meta.menuId;
-	const mapping = yield select(
-		'core/edit-navigation',
-		'getMenuItemIdToClientIdMapping',
-		menuId
-	);
+	const mapping = post.meta.menuItemIdToClientId;
 	const clientIdToMenuId = invert( mapping );
 
 	const stack = [ post.blocks[ 0 ] ];
@@ -61,13 +35,7 @@ export const createMissingMenuItems = serializeProcessing( function* ( post ) {
 				},
 			} );
 
-			yield dispatch(
-				'core/edit-navigation',
-				'assignMenuItemIdToClientId',
-				menuId,
-				menuItem.id,
-				block.clientId
-			);
+			mapping[ menuItem.id ] = block.clientId;
 			const menuItems = yield resolveMenuItems( menuId );
 			yield dispatch(
 				'core',
@@ -81,18 +49,22 @@ export const createMissingMenuItems = serializeProcessing( function* ( post ) {
 		}
 		stack.push( ...block.innerBlocks );
 	}
+
+	yield dispatch( 'core', 'editEntityRecord', KIND, POST_TYPE, post.id, {
+		meta: {
+			...post.meta,
+			menuItemIdToClientId: mapping,
+		},
+	} );
 } );
 
 export const saveMenuItems = serializeProcessing( function* ( post ) {
 	const menuId = post.meta.menuId;
-	const menuItems = yield resolveMenuItems( menuId );
-	const mapping = yield select(
-		'core/edit-navigation',
-		'getMenuItemIdToClientIdMapping',
-		menuId
+	const menuItemsByClientId = mapMenuItemsByClientId(
+		yield resolveMenuItems( menuId ),
+		post.meta.menuItemIdToClientId
 	);
 
-	const menuItemsByClientId = mapMenuItemsByClientId( menuItems, mapping );
 	try {
 		yield* batchSave( menuId, menuItemsByClientId, post.blocks[ 0 ] );
 		yield dispatch(
