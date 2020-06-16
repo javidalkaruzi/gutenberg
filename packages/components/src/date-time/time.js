@@ -16,6 +16,7 @@ import { __ } from '@wordpress/i18n';
  */
 import Button from '../button';
 import ButtonGroup from '../button-group';
+import Tooltip from '../tooltip';
 
 /**
  * Module Constants
@@ -277,6 +278,13 @@ class TimePicker extends Component {
 	render() {
 		const { is12Hour } = this.props;
 		const { year, minutes, hours, am } = this.state;
+		const timezone = moment.tz( new Date(), moment.tz.guess() );
+		const timezoneDetail =
+			'(UTC' +
+			timezone.format( 'Z' ).replace( /[0:]/g, '' ) +
+			') ' +
+			timezone.tz().replace( '_', ' ' );
+
 		return (
 			<div className={ classnames( 'components-datetime__time' ) }>
 				<fieldset>
@@ -353,6 +361,12 @@ class TimePicker extends Component {
 								</Button>
 							</ButtonGroup>
 						) }
+
+						<Tooltip position="top center" text={ timezoneDetail }>
+							<div className="components-datetime__timezone">
+								{ timezone.zoneAbbr() }
+							</div>
+						</Tooltip>
 					</div>
 				</fieldset>
 			</div>
