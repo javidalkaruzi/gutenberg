@@ -1,83 +1,33 @@
 /**
  * WordPress dependencies
  */
-import { __ } from '@wordpress/i18n';
-import { useDispatch, useSelect } from '@wordpress/data';
+import { useDispatch } from '@wordpress/data';
 import { useCallback } from '@wordpress/element';
 import { useEntityBlockEditor } from '@wordpress/core-data';
 
 /**
  * Internal dependencies
  */
-import useCreateMissingMenuItems from './use-create-missing-menu-items';
-import batchSave from './batch-save';
+import { KIND, POST_TYPE } from '../../store/utils';
 
-export default function useNavigationBlockEditor( query, postId ) {
-	const [ createMissingMenuItems, onCreated ] = useCreateMissingMenuItems(
-		query
-	);
-	const saveMenuItems = useSaveMenuItems( query );
-	const save = () => onCreated( () => saveMenuItems( blocks ) );
+export default function useNavigationBlockEditor( menuId, post ) {
+	const { createMissingMenuItems } = useDispatch( 'core/edit-navigation' );
 
 	const [ blocks, onInput, _onChange ] = useEntityBlockEditor(
-		'root',
-		'postType',
-		{ id: postId }
+		KIND,
+		POST_TYPE,
+		{ id: post.id }
 	);
 	const onChange = useCallback(
 		( updatedBlocks ) => {
-			_onChange( updatedBlocks );
-			createMissingMenuItems( blocks, updatedBlocks );
+			async function handle() {
+				await _onChange( updatedBlocks );
+				createMissingMenuItems( menuId );
+			}
+			handle();
 		},
-		[ blocks, onChange, createMissingMenuItems ]
+		[ blocks, onChange ]
 	);
 
-	return [ blocks, onInput, onChange, save ];
-}
-
-export function useSaveMenuItems( query ) {
-	const { createSuccessNotice, createErrorNotice } = useDispatch(
-		'core/notices'
-	);
-	const select = useSelect( ( s ) => s );
-	const saveBlocks = async ( blocks ) => {
-		const menuItemsByClientId = mapMenuItemsByClientId(
-			select( 'core' ).getMenuItems( query ),
-			select( 'core/edit-navigation' ).getMenuItemIdToClientIdMapping(
-				query
-			)
-		);
-
-		const result = await batchSave(
-			query.menus,
-			menuItemsByClientId,
-			blocks[ 0 ]
-		);
-
-		if ( result.success ) {
-			createSuccessNotice( __( 'Navigation saved.' ), {
-				type: 'snackbar',
-			} );
-		} else {
-			createErrorNotice( __( 'There was an error.' ), {
-				type: 'snackbar',
-			} );
-		}
-	};
-
-	return saveBlocks;
-}
-
-function mapMenuItemsByClientId( menuItems, clientIdsByMenuId ) {
-	const result = {};
-	if ( ! menuItems || ! clientIdsByMenuId ) {
-		return result;
-	}
-	for ( const menuItem of menuItems ) {
-		const clientId = clientIdsByMenuId[ menuItem.id ];
-		if ( clientId ) {
-			result[ clientId ] = menuItem;
-		}
-	}
-	return result;
+	return [ blocks, onInput, onChange ];
 }

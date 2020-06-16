@@ -14,28 +14,25 @@ import MenuEditorShortcuts from './shortcuts';
 import BlockEditorArea from './block-editor-area';
 import NavigationStructureArea from './navigation-structure-area';
 import useNavigationBlockEditor from './use-navigation-block-editor';
-import useStubPost from './use-stub-post';
-import { useMemo } from '@wordpress/element';
+import { useDispatch, useSelect } from '@wordpress/data';
 
 export default function MenuEditor( {
 	menuId,
 	blockEditorSettings,
 	onDeleteMenu,
 } ) {
-	const query = useMemo( () => ( { menus: menuId, per_page: -1 } ), [
-		menuId,
-	] );
-	const postId = useStubPost( query );
+	const post = useSelect( ( select ) =>
+		select( 'core/edit-navigation' ).getNavigationPost( menuId )
+	);
 
 	return (
 		<div className="edit-navigation-menu-editor">
 			<BlockEditorKeyboardShortcuts.Register />
 			<MenuEditorShortcuts.Register />
 
-			{ postId && (
+			{ post && (
 				<NavigationBlockEditorProvider
-					query={ query }
-					postId={ postId }
+					post={ post }
 					menuId={ menuId }
 					blockEditorSettings={ blockEditorSettings }
 					onDeleteMenu={ onDeleteMenu }
@@ -46,19 +43,18 @@ export default function MenuEditor( {
 }
 
 const NavigationBlockEditorProvider = ( {
-	query,
+	post,
 	menuId,
-	postId,
 	blockEditorSettings,
 	onDeleteMenu,
 } ) => {
 	const isLargeViewport = useViewportMatch( 'medium' );
-	const [
-		blocks,
-		onInput,
-		onChange,
-		saveMenuItems,
-	] = useNavigationBlockEditor( query, postId );
+	const [ blocks, onInput, onChange ] = useNavigationBlockEditor(
+		menuId,
+		post
+	);
+	const { saveMenuItems } = useDispatch( 'core/edit-navigation' );
+	const save = () => saveMenuItems( menuId );
 	return (
 		<BlockEditorProvider
 			value={ blocks }
@@ -71,13 +67,13 @@ const NavigationBlockEditorProvider = ( {
 			} }
 		>
 			<BlockEditorKeyboardShortcuts />
-			<MenuEditorShortcuts saveBlocks={ saveMenuItems } />
+			<MenuEditorShortcuts saveBlocks={ save } />
 			<NavigationStructureArea
 				blocks={ blocks }
 				initialOpen={ isLargeViewport }
 			/>
 			<BlockEditorArea
-				saveBlocks={ saveMenuItems }
+				saveBlocks={ save }
 				menuId={ menuId }
 				onDeleteMenu={ onDeleteMenu }
 			/>

@@ -7,8 +7,10 @@ import { registerStore } from '@wordpress/data';
  * Internal dependencies
  */
 import reducer from './reducer';
+import * as resolvers from './resolvers';
 import * as selectors from './selectors';
 import * as actions from './actions';
+import controls from './controls';
 
 /**
  * Module Constants
@@ -24,7 +26,9 @@ const MODULE_KEY = 'core/edit-navigation';
  */
 export const storeConfig = {
 	reducer,
+	controls,
 	selectors,
+	resolvers,
 	actions,
 };
 
