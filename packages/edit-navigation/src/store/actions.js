@@ -14,7 +14,6 @@ import { __ } from '@wordpress/i18n';
 import {
 	select,
 	resolveMenuItems,
-	getNavigationPost,
 	dispatch,
 	apiFetch,
 } from './controls';
@@ -39,10 +38,8 @@ export function assignMenuItemIdToClientId( menuId, menuItemId, clientId ) {
 
 // Hits POST /wp/v2/menu-items once for every Link block that doesn't have an
 // associated menu item. (IDK what a good name for this is.)
-export const createMissingMenuItems = serializeProcessing( function* (
-	menuId
-) {
-	const post = yield getNavigationPost( menuId );
+export const createMissingMenuItems = serializeProcessing( function* ( post ) {
+	const menuId = post.meta.menuId;
 	const mapping = yield select(
 		'core/edit-navigation',
 		'getMenuItemIdToClientIdMapping',
@@ -86,8 +83,8 @@ export const createMissingMenuItems = serializeProcessing( function* (
 	}
 } );
 
-export const saveMenuItems = serializeProcessing( function* ( menuId ) {
-	const post = yield getNavigationPost( menuId );
+export const saveMenuItems = serializeProcessing( function* ( post ) {
+	const menuId = post.meta.menuId;
 	const menuItems = yield resolveMenuItems( menuId );
 	const mapping = yield select(
 		'core/edit-navigation',

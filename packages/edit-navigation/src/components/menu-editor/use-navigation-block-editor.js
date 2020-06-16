@@ -10,7 +10,7 @@ import { useEntityBlockEditor } from '@wordpress/core-data';
  */
 import { KIND, POST_TYPE } from '../../store/utils';
 
-export default function useNavigationBlockEditor( menuId, post ) {
+export default function useNavigationBlockEditor( post ) {
 	const { createMissingMenuItems } = useDispatch( 'core/edit-navigation' );
 
 	const [ blocks, onInput, _onChange ] = useEntityBlockEditor(
@@ -22,7 +22,7 @@ export default function useNavigationBlockEditor( menuId, post ) {
 		( updatedBlocks ) => {
 			async function handle() {
 				await _onChange( updatedBlocks );
-				createMissingMenuItems( menuId );
+				createMissingMenuItems( post );
 			}
 			handle();
 		},

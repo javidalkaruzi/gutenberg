@@ -49,12 +49,9 @@ const NavigationBlockEditorProvider = ( {
 	onDeleteMenu,
 } ) => {
 	const isLargeViewport = useViewportMatch( 'medium' );
-	const [ blocks, onInput, onChange ] = useNavigationBlockEditor(
-		menuId,
-		post
-	);
+	const [ blocks, onInput, onChange ] = useNavigationBlockEditor( post );
 	const { saveMenuItems } = useDispatch( 'core/edit-navigation' );
-	const save = () => saveMenuItems( menuId );
+	const save = () => saveMenuItems( post );
 	return (
 		<BlockEditorProvider
 			value={ blocks }
