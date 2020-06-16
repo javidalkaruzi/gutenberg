@@ -11,8 +11,14 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { select, getNavigationPost, dispatch, apiFetch } from './controls';
-import { uuidv4 } from './utils';
+import {
+	select,
+	resolveMenuItems,
+	getNavigationPost,
+	dispatch,
+	apiFetch,
+} from './controls';
+import { uuidv4, menuItemsQuery } from './utils';
 
 export function setMenuItemsToClientIdMapping( menuId, mapping ) {
 	return {
@@ -36,7 +42,6 @@ export function assignMenuItemIdToClientId( menuId, menuItemId, clientId ) {
 export const createMissingMenuItems = serializeProcessing( function* (
 	menuId
 ) {
-	const query = { menus: menuId, per_page: -1 };
 	const post = yield getNavigationPost( menuId );
 	const mapping = yield select(
 		'core/edit-navigation',
@@ -66,14 +71,14 @@ export const createMissingMenuItems = serializeProcessing( function* (
 				menuItem.id,
 				block.clientId
 			);
-			const menuItems = yield select( 'core', 'getMenuItems', query );
+			const menuItems = yield resolveMenuItems( menuId );
 			yield dispatch(
 				'core',
 				'receiveEntityRecords',
 				'root',
 				'menuItem',
 				[ ...menuItems, menuItem ],
-				query,
+				menuItemsQuery( menuId ),
 				false
 			);
 		}
@@ -82,9 +87,8 @@ export const createMissingMenuItems = serializeProcessing( function* (
 } );
 
 export const saveMenuItems = serializeProcessing( function* ( menuId ) {
-	const query = { menus: menuId, per_page: -1 };
 	const post = yield getNavigationPost( menuId );
-	const menuItems = yield select( 'core', 'getMenuItems', query );
+	const menuItems = yield resolveMenuItems( menuId );
 	const mapping = yield select(
 		'core/edit-navigation',
 		'getMenuItemIdToClientIdMapping',
@@ -93,7 +97,7 @@ export const saveMenuItems = serializeProcessing( function* ( menuId ) {
 
 	const menuItemsByClientId = mapMenuItemsByClientId( menuItems, mapping );
 	try {
-		yield* batchSave( query.menus, menuItemsByClientId, post.blocks[ 0 ] );
+		yield* batchSave( menuId, menuItemsByClientId, post.blocks[ 0 ] );
 		yield dispatch(
 			'core/notices',
 			'createSuccessNotice',

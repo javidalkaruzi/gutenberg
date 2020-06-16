@@ -5,6 +5,11 @@ import { default as triggerApiFetch } from '@wordpress/api-fetch';
 import { createRegistryControl } from '@wordpress/data';
 
 /**
+ * Internal dependencies
+ */
+import { menuItemsQuery } from './utils';
+
+/**
  * Trigger an API Fetch request.
  *
  * @param {Object} request API Fetch Request Object.
@@ -23,6 +28,15 @@ export function getNavigationPost( menuId ) {
 		registryName: 'core/edit-navigation',
 		selectorName: 'getNavigationPost',
 		args: [ menuId ],
+	};
+}
+
+export function resolveMenuItems( menuId ) {
+	return {
+		type: 'RESOLVE_SELECT',
+		registryName: 'core',
+		selectorName: 'getMenuItems',
+		args: [ menuItemsQuery( menuId ) ],
 	};
 }
 

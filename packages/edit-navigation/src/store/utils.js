@@ -14,3 +14,7 @@ export function uuidv4() {
 		return v.toString( 16 );
 	} );
 }
+
+export function menuItemsQuery( menuId ) {
+	return { menus: menuId, per_page: -1 };
+}

@@ -11,17 +11,11 @@ import { createBlock } from '@wordpress/blocks';
 /**
  * Internal dependencies
  */
-import { resolveSelect, dispatch } from './controls';
+import { resolveMenuItems, dispatch } from './controls';
 import { KIND, POST_TYPE, buildNavigationPostId } from './utils';
 
 export function* getNavigationPost( menuId ) {
-	const menuItemsQuery = { menus: menuId, per_page: -1 };
-	const menuItems = yield resolveSelect(
-		'core',
-		'getMenuItems',
-		menuItemsQuery
-	);
-
+	const menuItems = yield resolveMenuItems( menuId );
 	const [ navigationBlock, menuItemIdToClientId ] = createNavigationBlock(
 		menuItems
 	);
