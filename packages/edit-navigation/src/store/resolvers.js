@@ -16,20 +16,26 @@ import { KIND, POST_TYPE, buildNavigationPostId } from './utils';
 
 export function* getNavigationPost( menuId ) {
 	const menuItemsQuery = { menus: menuId, per_page: -1 };
-	const menuItems = yield resolveSelect( 'getMenuItems', menuItemsQuery );
+	const menuItems = yield resolveSelect(
+		'core',
+		'getMenuItems',
+		menuItemsQuery
+	);
 
 	const [ navigationBlock, menuItemIdToClientId ] = createNavigationBlock(
 		menuItems
 	);
 
 	yield dispatch(
-		'core/edit-navigation/setMenuItemsToClientIdMapping',
+		'core/edit-navigation',
+		'setMenuItemsToClientIdMapping',
 		menuId,
 		menuItemIdToClientId
 	);
 
 	const post = createStubPost( menuId, navigationBlock );
 	yield dispatch(
+		'core',
 		'receiveEntityRecords',
 		KIND,
 		POST_TYPE,
@@ -43,11 +49,13 @@ const createStubPost = ( menuId, navigationBlock ) => {
 	const id = buildNavigationPostId( menuId );
 	return {
 		id,
-		menuId,
 		slug: id,
 		status: 'draft',
 		type: 'page',
 		blocks: [ navigationBlock ],
+		meta: {
+			menuId,
+		},
 	};
 };
 

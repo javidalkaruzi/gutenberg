@@ -20,14 +20,15 @@ export function apiFetch( request ) {
 /**
  * Calls a selector using the current state.
  *
- * @param {string} selectorName Selector name.
- * @param  {Array} args         Selector arguments.
- *
+ * @param {string} registryName
+ * @param {string} selectorName
+ * @param {Array} args         Selector arguments.
  * @return {Object} control descriptor.
  */
-export function select( selectorName, ...args ) {
+export function select( registryName, selectorName, ...args ) {
 	return {
 		type: 'SELECT',
+		registryName,
 		selectorName,
 		args,
 	};
@@ -37,22 +38,24 @@ export function select( selectorName, ...args ) {
  * Dispatches a control action for triggering a registry select that has a
  * resolver.
  *
- * @param {string}  selectorName
- * @param {Array}   args  Arguments for the select.
- *
+ * @param {string} registryName
+ * @param {string} selectorName
+ * @param {Array} args  Arguments for the select.
  * @return {Object} control descriptor.
  */
-export function resolveSelect( selectorName, ...args ) {
+export function resolveSelect( registryName, selectorName, ...args ) {
 	return {
 		type: 'RESOLVE_SELECT',
+		registryName,
 		selectorName,
 		args,
 	};
 }
 
-export function dispatch( actionName, ...args ) {
+export function dispatch( registryName, actionName, ...args ) {
 	return {
 		type: 'DISPATCH',
+		registryName,
 		actionName,
 		args,
 	};
@@ -64,45 +67,24 @@ const controls = {
 	},
 
 	SELECT: createRegistryControl(
-		( registry ) => ( { selectorName, args } ) => {
-			const [ registryName, resolvedSelectorName ] = resolveRegistryName(
-				selectorName
-			);
-			return registry
-				.select( registryName )
-				[ resolvedSelectorName ]( ...args );
+		( registry ) => ( { registryName, selectorName, args } ) => {
+			return registry.select( registryName )[ selectorName ]( ...args );
 		}
 	),
 
 	DISPATCH: createRegistryControl(
-		( registry ) => ( { actionName, args } ) => {
-			const [ registryName, resolvedActionName ] = resolveRegistryName(
-				actionName
-			);
-			return registry
-				.dispatch( registryName )
-				[ resolvedActionName ]( ...args );
+		( registry ) => ( { registryName, actionName, args } ) => {
+			return registry.dispatch( registryName )[ actionName ]( ...args );
 		}
 	),
 
 	RESOLVE_SELECT: createRegistryControl(
-		( registry ) => ( { selectorName, args } ) => {
+		( registry ) => ( { registryName, selectorName, args } ) => {
 			return registry
-				.__experimentalResolveSelect( 'core' )
+				.__experimentalResolveSelect( registryName )
 				[ selectorName ]( ...args );
 		}
 	),
 };
 
 export default controls;
-
-const resolveRegistryName = ( selectorName ) => {
-	if ( ! selectorName.includes( '/' ) ) {
-		return [ 'core', selectorName ];
-	}
-	const parts = selectorName.split( '/' );
-	return [
-		parts.slice( 0, parts.length - 1 ).join( '/' ),
-		parts[ parts.length - 1 ],
-	];
-};

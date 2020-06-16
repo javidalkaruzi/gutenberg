@@ -61,13 +61,15 @@ export const createMissingMenuItems = serializeProcessing( function* (
 	const query = { menus: menuId, per_page: -1 };
 	const postId = `navigation-post-${ menuId }`;
 	const post = yield select(
+		'core',
 		'getEditedEntityRecord',
 		KIND,
 		POST_TYPE,
 		postId
 	);
 	const mapping = yield select(
-		'core/edit-navigation/getMenuItemIdToClientIdMapping',
+		'core/edit-navigation',
+		'getMenuItemIdToClientIdMapping',
 		menuId
 	);
 	const clientIdToMenuId = invert( mapping );
@@ -78,12 +80,13 @@ export const createMissingMenuItems = serializeProcessing( function* (
 		if ( ! ( block.clientId in clientIdToMenuId ) ) {
 			const menuItem = yield createStubMenuItem();
 			yield dispatch(
-				'core/edit-navigation/assignMenuItemIdToClientId',
+				'core/edit-navigation',
+				'assignMenuItemIdToClientId',
 				menuId,
 				menuItem.id,
 				block.clientId
 			);
-			const menuItems = yield select( 'getMenuItems', query );
+			const menuItems = yield select( 'core', 'getMenuItems', query );
 			yield storeMenuItem( query, menuItems, menuItem );
 		}
 		stack.push( ...block.innerBlocks );
@@ -103,6 +106,7 @@ const createStubMenuItem = () =>
 
 const storeMenuItem = ( query, menuItems, menuItem ) =>
 	dispatch(
+		'core',
 		'receiveEntityRecords',
 		'root',
 		'menuItem',
@@ -115,14 +119,16 @@ export const saveMenuItems = serializeProcessing( function* ( menuId ) {
 	const query = { menus: menuId, per_page: -1 };
 	const postId = `navigation-post-${ menuId }`;
 	const post = yield select(
+		'core',
 		'getEditedEntityRecord',
 		KIND,
 		POST_TYPE,
 		postId
 	);
-	const menuItems = yield select( 'getMenuItems', query );
+	const menuItems = yield select( 'core', 'getMenuItems', query );
 	const mapping = yield select(
-		'core/edit-navigation/getMenuItemIdToClientIdMapping',
+		'core/edit-navigation',
+		'getMenuItemIdToClientIdMapping',
 		menuId
 	);
 
@@ -130,7 +136,8 @@ export const saveMenuItems = serializeProcessing( function* ( menuId ) {
 	try {
 		yield* batchSave( query.menus, menuItemsByClientId, post.blocks[ 0 ] );
 		yield dispatch(
-			'core/notices/createSuccessNotice',
+			'core/notices',
+			'createSuccessNotice',
 			__( 'Navigation saved.' ),
 			{
 				type: 'snackbar',
@@ -138,7 +145,8 @@ export const saveMenuItems = serializeProcessing( function* ( menuId ) {
 		);
 	} catch ( e ) {
 		yield dispatch(
-			'core/notices/createErrorNotice',
+			'core/notices',
+			'createErrorNotice',
 			__( 'There was an error.' ),
 			{
 				type: 'snackbar',
@@ -164,12 +172,14 @@ function mapMenuItemsByClientId( menuItems, clientIdsByMenuId ) {
 function serializeProcessing( callback ) {
 	return function* ( menuId ) {
 		const isProcessing = yield select(
-			'core/edit-navigation/isProcessingMenuItems',
+			'core/edit-navigation',
+			'isProcessingMenuItems',
 			menuId
 		);
 		if ( isProcessing ) {
 			yield dispatch(
-				'core/edit-navigation/enqueueAfterProcessing',
+				'core/edit-navigation',
+				'enqueueAfterProcessing',
 				menuId,
 				callback
 			);
@@ -177,7 +187,8 @@ function serializeProcessing( callback ) {
 		}
 
 		yield dispatch(
-			'core/edit-navigation/startProcessingMenuItems',
+			'core/edit-navigation',
+			'startProcessingMenuItems',
 			menuId
 		);
 
@@ -185,12 +196,14 @@ function serializeProcessing( callback ) {
 			yield* callback( menuId );
 		} finally {
 			yield dispatch(
-				'core/edit-navigation/finishProcessingMenuItems',
+				'core/edit-navigation',
+				'finishProcessingMenuItems',
 				menuId
 			);
 
 			const pendingActions = yield select(
-				'core/edit-navigation/getPendingActions',
+				'core/edit-navigation',
+				'getPendingActions',
 				menuId
 			);
 			if ( pendingActions.length ) {
