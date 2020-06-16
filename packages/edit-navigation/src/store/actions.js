@@ -12,6 +12,7 @@ import { __ } from '@wordpress/i18n';
  * Internal dependencies
  */
 import { select, getNavigationPost, dispatch, apiFetch } from './controls';
+import { uuidv4 } from './utils';
 
 export function setMenuItemsToClientIdMapping( menuId, mapping ) {
 	return {
@@ -27,28 +28,6 @@ export function assignMenuItemIdToClientId( menuId, menuItemId, clientId ) {
 		menuId,
 		menuItemId,
 		clientId,
-	};
-}
-
-export function startProcessingMenuItems( menuId ) {
-	return {
-		type: 'START_PROCESSING_MENU_ITEMS',
-		menuId,
-	};
-}
-
-export function finishProcessingMenuItems( menuId ) {
-	return {
-		type: 'FINISH_PROCESSING_MENU_ITEMS',
-		menuId,
-	};
-}
-
-export function enqueueAfterProcessing( menuId, action ) {
-	return {
-		type: 'ENQUEUE_AFTER_PROCESSING',
-		menuId,
-		action,
 	};
 }
 
@@ -70,7 +49,16 @@ export const createMissingMenuItems = serializeProcessing( function* (
 	while ( stack.length ) {
 		const block = stack.pop();
 		if ( ! ( block.clientId in clientIdToMenuId ) ) {
-			const menuItem = yield createStubMenuItem();
+			const menuItem = yield apiFetch( {
+				path: `/__experimental/menu-items`,
+				method: 'POST',
+				data: {
+					title: 'Placeholder',
+					url: 'Placeholder',
+					menu_order: 0,
+				},
+			} );
+
 			yield dispatch(
 				'core/edit-navigation',
 				'assignMenuItemIdToClientId',
@@ -79,33 +67,19 @@ export const createMissingMenuItems = serializeProcessing( function* (
 				block.clientId
 			);
 			const menuItems = yield select( 'core', 'getMenuItems', query );
-			yield storeMenuItem( query, menuItems, menuItem );
+			yield dispatch(
+				'core',
+				'receiveEntityRecords',
+				'root',
+				'menuItem',
+				[ ...menuItems, menuItem ],
+				query,
+				false
+			);
 		}
 		stack.push( ...block.innerBlocks );
 	}
 } );
-
-const createStubMenuItem = () =>
-	apiFetch( {
-		path: `/__experimental/menu-items`,
-		method: 'POST',
-		data: {
-			title: 'Placeholder',
-			url: 'Placeholder',
-			menu_order: 0,
-		},
-	} );
-
-const storeMenuItem = ( query, menuItems, menuItem ) =>
-	dispatch(
-		'core',
-		'receiveEntityRecords',
-		'root',
-		'menuItem',
-		[ ...menuItems, menuItem ],
-		query,
-		false
-	);
 
 export const saveMenuItems = serializeProcessing( function* ( menuId ) {
 	const query = { menus: menuId, per_page: -1 };
@@ -152,50 +126,6 @@ function mapMenuItemsByClientId( menuItems, clientIdsByMenuId ) {
 		}
 	}
 	return result;
-}
-
-function serializeProcessing( callback ) {
-	return function* ( menuId ) {
-		const isProcessing = yield select(
-			'core/edit-navigation',
-			'isProcessingMenuItems',
-			menuId
-		);
-		if ( isProcessing ) {
-			yield dispatch(
-				'core/edit-navigation',
-				'enqueueAfterProcessing',
-				menuId,
-				callback
-			);
-			return { status: 'pending' };
-		}
-
-		yield dispatch(
-			'core/edit-navigation',
-			'startProcessingMenuItems',
-			menuId
-		);
-
-		try {
-			yield* callback( menuId );
-		} finally {
-			yield dispatch(
-				'core/edit-navigation',
-				'finishProcessingMenuItems',
-				menuId
-			);
-
-			const pendingActions = yield select(
-				'core/edit-navigation',
-				'getPendingActions',
-				menuId
-			);
-			if ( pendingActions.length ) {
-				yield* pendingActions[ 0 ]( menuId );
-			}
-		}
-	};
 }
 
 function* batchSave( menuId, menuItemsByClientId, navigationBlock ) {
@@ -281,14 +211,68 @@ function computeCustomizedAttribute( blocks, menuId, menuItemsByClientId ) {
 	}
 }
 
-function uuidv4() {
-	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace( /[xy]/g, ( c ) => {
-		// eslint-disable-next-line no-restricted-syntax
-		const a = Math.random() * 16;
-		// eslint-disable-next-line no-bitwise
-		const r = a | 0;
-		// eslint-disable-next-line no-bitwise
-		const v = c === 'x' ? r : ( r & 0x3 ) | 0x8;
-		return v.toString( 16 );
-	} );
+function serializeProcessing( callback ) {
+	return function* ( menuId ) {
+		const isProcessing = yield select(
+			'core/edit-navigation',
+			'isProcessingMenuItems',
+			menuId
+		);
+		if ( isProcessing ) {
+			yield dispatch(
+				'core/edit-navigation',
+				'enqueueAfterProcessing',
+				menuId,
+				callback
+			);
+			return { status: 'pending' };
+		}
+
+		yield dispatch(
+			'core/edit-navigation',
+			'startProcessingMenuItems',
+			menuId
+		);
+
+		try {
+			yield* callback( menuId );
+		} finally {
+			yield dispatch(
+				'core/edit-navigation',
+				'finishProcessingMenuItems',
+				menuId
+			);
+
+			const pendingActions = yield select(
+				'core/edit-navigation',
+				'getPendingActions',
+				menuId
+			);
+			if ( pendingActions.length ) {
+				yield* pendingActions[ 0 ]( menuId );
+			}
+		}
+	};
+}
+
+export function startProcessingMenuItems( menuId ) {
+	return {
+		type: 'START_PROCESSING_MENU_ITEMS',
+		menuId,
+	};
+}
+
+export function finishProcessingMenuItems( menuId ) {
+	return {
+		type: 'FINISH_PROCESSING_MENU_ITEMS',
+		menuId,
+	};
+}
+
+export function enqueueAfterProcessing( menuId, action ) {
+	return {
+		type: 'ENQUEUE_AFTER_PROCESSING',
+		menuId,
+		action,
+	};
 }
