@@ -43,8 +43,8 @@ const createStubPost = ( menuId, navigationBlock ) => {
 	const id = buildNavigationPostId( menuId );
 	return {
 		id,
+		menuId,
 		slug: id,
-		generated_slug: id,
 		status: 'draft',
 		type: 'page',
 		blocks: [ navigationBlock ],
