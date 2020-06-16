@@ -32,7 +32,6 @@ export default function MenuEditor( {
 			{ post && (
 				<NavigationBlockEditorProvider
 					post={ post }
-					menuId={ menuId }
 					blockEditorSettings={ blockEditorSettings }
 					onDeleteMenu={ onDeleteMenu }
 				/>
@@ -43,7 +42,6 @@ export default function MenuEditor( {
 
 const NavigationBlockEditorProvider = ( {
 	post,
-	menuId,
 	blockEditorSettings,
 	onDeleteMenu,
 } ) => {
@@ -70,7 +68,7 @@ const NavigationBlockEditorProvider = ( {
 			/>
 			<BlockEditorArea
 				saveBlocks={ save }
-				menuId={ menuId }
+				menuId={ post.menuId }
 				onDeleteMenu={ onDeleteMenu }
 			/>
 		</BlockEditorProvider>
