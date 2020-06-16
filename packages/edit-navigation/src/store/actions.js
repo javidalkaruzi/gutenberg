@@ -11,8 +11,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { select, dispatch, apiFetch } from './controls';
-import { KIND, POST_TYPE } from './utils';
+import { select, getNavigationPost, dispatch, apiFetch } from './controls';
 
 export function setMenuItemsToClientIdMapping( menuId, mapping ) {
 	return {
@@ -59,14 +58,7 @@ export const createMissingMenuItems = serializeProcessing( function* (
 	menuId
 ) {
 	const query = { menus: menuId, per_page: -1 };
-	const postId = `navigation-post-${ menuId }`;
-	const post = yield select(
-		'core',
-		'getEditedEntityRecord',
-		KIND,
-		POST_TYPE,
-		postId
-	);
+	const post = yield getNavigationPost( menuId );
 	const mapping = yield select(
 		'core/edit-navigation',
 		'getMenuItemIdToClientIdMapping',
@@ -117,14 +109,7 @@ const storeMenuItem = ( query, menuItems, menuItem ) =>
 
 export const saveMenuItems = serializeProcessing( function* ( menuId ) {
 	const query = { menus: menuId, per_page: -1 };
-	const postId = `navigation-post-${ menuId }`;
-	const post = yield select(
-		'core',
-		'getEditedEntityRecord',
-		KIND,
-		POST_TYPE,
-		postId
-	);
+	const post = yield getNavigationPost( menuId );
 	const menuItems = yield select( 'core', 'getMenuItems', query );
 	const mapping = yield select(
 		'core/edit-navigation',

@@ -22,7 +22,7 @@ export function getMenuItemIdToClientIdMapping( state, menuId ) {
 
 export const getNavigationPost = createRegistrySelector(
 	( select ) => ( state, menuId ) => {
-		return select( 'core' ).getEntityRecord(
+		return select( 'core' ).getEditedEntityRecord(
 			KIND,
 			POST_TYPE,
 			buildNavigationPostId( menuId )

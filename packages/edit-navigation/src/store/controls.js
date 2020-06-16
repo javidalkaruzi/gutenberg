@@ -17,6 +17,15 @@ export function apiFetch( request ) {
 	};
 }
 
+export function getNavigationPost( menuId ) {
+	return {
+		type: 'SELECT',
+		registryName: 'core/edit-navigation',
+		selectorName: 'getNavigationPost',
+		args: [ menuId ],
+	};
+}
+
 /**
  * Calls a selector using the current state.
  *
