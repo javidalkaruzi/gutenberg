@@ -58,7 +58,7 @@ export const createMissingMenuItems = serializeProcessing( function* ( post ) {
 	} );
 } );
 
-export const saveMenuItems = serializeProcessing( function* ( post ) {
+export const saveNavigationPost = serializeProcessing( function* ( post ) {
 	const menuId = post.meta.menuId;
 	const menuItemsByClientId = mapMenuItemsByClientId(
 		yield resolveMenuItems( menuId ),
