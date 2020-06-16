@@ -1,4 +1,9 @@
 /**
+ * External dependencies
+ */
+import { invert } from 'lodash';
+
+/**
  * WordPress dependencies
  */
 import { createRegistrySelector } from '@wordpress/data';
@@ -23,5 +28,12 @@ export const getNavigationPost = createRegistrySelector(
 			POST_TYPE,
 			buildNavigationPostId( menuId )
 		);
+	}
+);
+
+export const getMenuItemForClientId = createRegistrySelector(
+	( select ) => ( state, post, clientId ) => {
+		const mapping = invert( post.meta.menuItemIdToClientId );
+		return select( 'core' ).getMenuItem( mapping[ clientId ] );
 	}
 );
